@@ -71,6 +71,10 @@ Router.put('/', [
                 }
 
                 updatedBots.push(bots[i]);
+
+                bots[i].message = '';
+                console.log(bots[i])
+                console.log(updatedBots[i])
             }
         }
     });

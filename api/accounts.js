@@ -29,7 +29,7 @@ Router.get('/stats', (req, res) => {
 });
 
 Router.get('/', (req, res) => {
-    Account.find(req.query.inuse ? { inUse: req.query.inuse } : {}).skip(parseInt(req.query.skip)).limit(parseInt(req.query.limit)).then(data => res.json(data)).catch(err => res.status(500).json({ message: err.message }));
+    Account.find(req.query.inUse ? { inUse: req.query.inUse } : {}).skip(parseInt(req.query.skip)).limit(parseInt(req.query.limit)).then(data => res.json(data)).catch(err => res.status(500).json({ message: err.message }));
 });
 
 Router.get('/:id', (req, res) => {

@@ -10,8 +10,8 @@ const Router = express.Router();
 Router.post('/', [
     check('amount').isNumeric(),
     check('stopIn').isNumeric(),
-    check('script').isString(),
     check('world').isString(),
+    check('target').isString(),
     check('useProxies').isBoolean()
 ], (req, res) => {
     let errors = validationResult(req);
@@ -20,7 +20,7 @@ Router.post('/', [
         return res.status(422).json({ errors: errors.array() });
     }
 
-    let { amount, stopIn, script, world, useProxies } = req.body;
+    let { amount, stopIn, target, world, useProxies } = req.body;
 
     if(useProxies === true) {
         Proxy.find({ inUse: false }).limit(amount).then(data => {
@@ -28,7 +28,7 @@ Router.post('/', [
                 for(let i = 0; i < amount; i++) {
                     setTimeout(() => {
                         spawnBotProcess({
-                            script,
+                            target,
                             world,
                             proxy: data[i],
                             stopIn
@@ -51,7 +51,7 @@ Router.post('/', [
         for(let i = 0; i < amount; i++) {
             setTimeout(() => {
                 spawnBotProcess({
-                    script,
+                    target,
                     world,
                     stopIn
                 });
@@ -70,9 +70,11 @@ spawnBotProcess = (launchObj) => {
         '-key', process.env.QB_API_KEY,
         '-fps', '25',
         '-world', launchObj.world,
-        '-script', launchObj.script
+        '-script', 'Runner',
+        '-target', launchObj.target.replace(new RegExp(' ', 'g'), '_')
     ];
 
+    console.log(launchObj.target.replace(new RegExp(' ', 'g'), '_'))
     if(launchObj.stopIn && launchObj.stopIn > 0) {
         args.push('-stop', launchObj.stopIn);
     }
@@ -86,7 +88,21 @@ spawnBotProcess = (launchObj) => {
         }
     }
 
-    spawn('java', args);
+    console.log(args);
+
+    let p = spawn('java', args);
+
+    p.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+      });
+      
+      p.stderr.on('data', (data) => {
+        console.log(`stderr: ${data}`);
+      });
+      
+      p.on('close', (code) => {
+        console.log(`child process exited with code ${code}`);
+      });
 }
 
 module.exports = Router;
