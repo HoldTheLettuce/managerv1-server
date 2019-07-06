@@ -68,7 +68,7 @@ spawnBotProcess = (launchObj) => {
     let args = [
         '-jar', `${ os.homedir() }/Desktop/QuantumLauncher.jar`,
         '-key', process.env.QB_API_KEY,
-        '-fps', '25',
+        '-norender',
         '-world', launchObj.world,
         '-script', 'Runner',
         '-target', launchObj.target.replace(new RegExp(' ', 'g'), '_')
