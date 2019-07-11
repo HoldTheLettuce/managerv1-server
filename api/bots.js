@@ -39,8 +39,11 @@ Router.post('/', [
     let newBot = {
         id: shortid.generate(),
         script: req.body.script,
-        message: '',
-        lastPingAt: Date.now()
+        command: {},
+        customData: {},
+        isLoggedIn: false,
+        lastPingAt: Date.now(),
+        connectedAt: Date.now()
     };
 
     console.log('Bot', newBot.id, 'connected.');
@@ -66,15 +69,13 @@ Router.put('/', [
             if(bots[i].id === id) {
                 bots[i].lastPingAt = Date.now();
 
-                if(req.body.message) {
-                    bots[i].message = req.body.message;
+                if(req.body.command) {
+                    bots[i].command = req.body.command;
                 }
 
-                updatedBots.push(bots[i]);
+                console.log(req.body);
 
-                bots[i].message = '';
-                console.log(bots[i])
-                console.log(updatedBots[i])
+                updatedBots.push(bots[i]);
             }
         }
     });
@@ -83,7 +84,8 @@ Router.put('/', [
 });
 
 Router.put('/:id', [
-    check('state').isString()
+    check('state').isString(),
+    check('isLoggedIn').isBoolean()
 ], (req, res) => {
     let errors = validationResult(req);
 
@@ -94,13 +96,18 @@ Router.put('/:id', [
     for(let i = 0; i < bots.length; i++) {
         if(bots[i].id === req.params.id) {
             bots[i].state = req.body.state;
+            bots[i].isLoggedIn = req.body.isLoggedIn;
             bots[i].lastPingAt = Date.now();
+
+            if(req.body.customData) {
+                bots[i].customData = req.body.customData;
+            }
 
             return res.json(bots[i]);
         }
     }
 
-    res.status(404).json({ message: 'Bot not found.' });
+    return res.status(404).json({ message: 'Bot not found.' });
 });
 
 Router.delete('/', (req, res) => {
@@ -121,6 +128,19 @@ Router.delete('/:id', (req, res) => {
             console.log('Bot', deletedBot.id, 'disconnected.');
 
             return res.json(deletedBot);
+        }
+    }
+
+    res.status(404).json({ message: 'Bot not found.' });
+});
+
+// Resets bots command field
+Router.delete('/:id/command', (req, res) => {
+    for(let i = 0; i < bots.length; i++) {
+        if(bots[i].id === req.params.id) {
+            bots[i].command = {};
+
+            return res.json(bots[i]);
         }
     }
 

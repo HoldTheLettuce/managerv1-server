@@ -11,7 +11,6 @@ Router.post('/', [
     check('amount').isNumeric(),
     check('stopIn').isNumeric(),
     check('world').isString(),
-    check('target').isString(),
     check('useProxies').isBoolean()
 ], (req, res) => {
     let errors = validationResult(req);
@@ -20,7 +19,7 @@ Router.post('/', [
         return res.status(422).json({ errors: errors.array() });
     }
 
-    let { amount, stopIn, target, world, useProxies } = req.body;
+    let { amount, stopIn, world, useProxies } = req.body;
 
     if(useProxies === true) {
         Proxy.find({ inUse: false }).limit(amount).then(data => {
@@ -28,7 +27,6 @@ Router.post('/', [
                 for(let i = 0; i < amount; i++) {
                     setTimeout(() => {
                         spawnBotProcess({
-                            target,
                             world,
                             proxy: data[i],
                             stopIn
@@ -51,7 +49,6 @@ Router.post('/', [
         for(let i = 0; i < amount; i++) {
             setTimeout(() => {
                 spawnBotProcess({
-                    target,
                     world,
                     stopIn
                 });
@@ -70,11 +67,9 @@ spawnBotProcess = (launchObj) => {
         '-key', process.env.QB_API_KEY,
         '-nodraw',
         '-world', launchObj.world,
-        '-script', 'Runner',
-        '-target', launchObj.target.replace(new RegExp(' ', 'g'), '_')
+        '-script', 'Runner'
     ];
 
-    console.log(launchObj.target.replace(new RegExp(' ', 'g'), '_'))
     if(launchObj.stopIn && launchObj.stopIn > 0) {
         args.push('-stop', launchObj.stopIn);
     }
@@ -90,19 +85,8 @@ spawnBotProcess = (launchObj) => {
 
     console.log(args);
 
-    let p = spawn('java', args);
-
-    p.stdout.on('data', (data) => {
-        console.log(`stdout: ${data}`);
-      });
-      
-      p.stderr.on('data', (data) => {
-        console.log(`stderr: ${data}`);
-      });
-      
-      p.on('close', (code) => {
-        console.log(`child process exited with code ${code}`);
-      });
+    let p = spawn('java', args, { detached: true, stdio: ['ignore'] });
+    p.unref();
 }
 
 module.exports = Router;
